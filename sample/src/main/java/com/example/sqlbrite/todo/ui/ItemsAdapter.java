@@ -16,6 +16,7 @@
 package com.example.sqlbrite.todo.ui;
 
 import android.content.Context;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.text.SpannableString;
 import android.text.style.StrikethroughSpan;
@@ -47,8 +48,10 @@ final class ItemsAdapter extends RecyclerView.Adapter<ItemsAdapter.ViewHolder> i
 
     @Override
     public void call(List<TodoItem> items) {
+        TodoItemDiffCallback callback = new TodoItemDiffCallback(this.items, items);
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(callback);
         this.items = items;
-        notifyDataSetChanged();
+        diffResult.dispatchUpdatesTo(this);
     }
 
 
