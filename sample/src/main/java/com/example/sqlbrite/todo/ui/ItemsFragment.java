@@ -20,7 +20,9 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.util.Pair;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -42,6 +44,10 @@ import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerViewAdapter;
 import com.jakewharton.rxbinding.widget.AdapterViewItemClickEvent;
 import com.jakewharton.rxbinding.widget.RxAdapterView;
 import com.squareup.sqlbrite.BriteDatabase;
+
+import java.util.Collections;
+import java.util.List;
+
 import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
@@ -190,8 +196,18 @@ public final class ItemsFragment extends Fragment {
               }
             }));
 
+    Pair<List<TodoItem>, DiffUtil.DiffResult> init = Pair.create(Collections.<TodoItem>emptyList(), null);
     subscriptions.add(db.createQuery(TodoItem.TABLE, LIST_QUERY, listId)
         .mapToList(TodoItem.MAPPER)
+        .scan(init, new Func2<Pair<List<TodoItem>, DiffUtil.DiffResult>, List<TodoItem>, Pair<List<TodoItem>, DiffUtil.DiffResult>>() {
+          @Override
+          public Pair<List<TodoItem>, DiffUtil.DiffResult> call(Pair<List<TodoItem>, DiffUtil.DiffResult> listDiffResultPair, List<TodoItem> todoItems) {
+            TodoItemDiffCallback callback = new TodoItemDiffCallback(listDiffResultPair.first, todoItems);
+            DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(callback);
+            return Pair.create(todoItems, diffResult);
+          }
+        })
+        .skip(1) // 跳过 scan 的初始值 init
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(adapter));
   }

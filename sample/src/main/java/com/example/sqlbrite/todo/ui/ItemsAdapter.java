@@ -16,6 +16,7 @@
 package com.example.sqlbrite.todo.ui;
 
 import android.content.Context;
+import android.support.v4.util.Pair;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.text.SpannableString;
@@ -35,7 +36,7 @@ import java.util.List;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
-final class ItemsAdapter extends RecyclerView.Adapter<ItemsAdapter.ViewHolder> implements Action1<List<TodoItem>> {
+final class ItemsAdapter extends RecyclerView.Adapter<ItemsAdapter.ViewHolder> implements Action1<Pair<List<TodoItem>, DiffUtil.DiffResult>> {
     private final LayoutInflater inflater;
 
     private List<TodoItem> items = Collections.emptyList();
@@ -47,11 +48,9 @@ final class ItemsAdapter extends RecyclerView.Adapter<ItemsAdapter.ViewHolder> i
     }
 
     @Override
-    public void call(List<TodoItem> items) {
-        TodoItemDiffCallback callback = new TodoItemDiffCallback(this.items, items);
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(callback);
-        this.items = items;
-        diffResult.dispatchUpdatesTo(this);
+    public void call(Pair<List<TodoItem>, DiffUtil.DiffResult> pair) {
+        this.items = pair.first;
+        pair.second.dispatchUpdatesTo(this);
     }
 
 
