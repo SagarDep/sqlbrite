@@ -21,6 +21,8 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,6 +37,8 @@ import com.example.sqlbrite.todo.TodoApp;
 import com.example.sqlbrite.todo.db.Db;
 import com.example.sqlbrite.todo.db.TodoItem;
 import com.example.sqlbrite.todo.db.TodoList;
+import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerView;
+import com.jakewharton.rxbinding.support.v7.widget.RxRecyclerViewAdapter;
 import com.jakewharton.rxbinding.widget.AdapterViewItemClickEvent;
 import com.jakewharton.rxbinding.widget.RxAdapterView;
 import com.squareup.sqlbrite.BriteDatabase;
@@ -87,7 +91,8 @@ public final class ItemsFragment extends Fragment {
 
   @Inject BriteDatabase db;
 
-  @BindView(android.R.id.list) ListView listView;
+  @BindView(android.R.id.list)
+  RecyclerView listView;
   @BindView(android.R.id.empty) View emptyView;
 
   private Listener listener;
@@ -108,7 +113,7 @@ public final class ItemsFragment extends Fragment {
     setHasOptionsMenu(true);
 
     listener = (Listener) activity;
-    adapter = new ItemsAdapter(activity);
+    adapter = new ItemsAdapter(activity, db);
   }
 
   @Override public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -133,18 +138,9 @@ public final class ItemsFragment extends Fragment {
   public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
     ButterKnife.bind(this, view);
-    listView.setEmptyView(emptyView);
     listView.setAdapter(adapter);
+    listView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-    RxAdapterView.itemClickEvents(listView) //
-        .observeOn(Schedulers.io())
-        .subscribe(new Action1<AdapterViewItemClickEvent>() {
-          @Override public void call(AdapterViewItemClickEvent event) {
-            boolean newValue = !adapter.getItem(event.position()).complete();
-            db.update(TodoItem.TABLE, new TodoItem.Builder().complete(newValue).build(),
-                TodoItem.ID + " = ?", String.valueOf(event.id()));
-          }
-        });
   }
 
   @Override public void onResume() {
